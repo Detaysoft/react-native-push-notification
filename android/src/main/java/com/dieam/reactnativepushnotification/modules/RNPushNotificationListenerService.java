@@ -15,7 +15,11 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
 import com.google.android.gms.gcm.GcmListenerService;
 
+import android.database.sqlite.SQLiteDatabase;
+import android.content.ContentValues;
+
 import org.json.JSONObject;
+import org.json.JSONException;
 
 import java.util.List;
 import java.util.Random;
@@ -46,7 +50,28 @@ public class RNPushNotificationListenerService extends GcmListenerService {
                 ApplicationBadgeHelper.INSTANCE.setApplicationIconBadgeNumber(this, badge);
             }
         }
+        /* Sqlite Database Saving */
+        RNPushNotificationFeedReaderDbHelper helper = new RNPushNotificationFeedReaderDbHelper(getApplicationContext()) {
+            @Override
+            public void onCreate(SQLiteDatabase db) {
+                super.onCreate(db);
+            }
+        };
+        SQLiteDatabase db = helper.getWritableDatabase();
+        ContentValues values = new ContentValues();
 
+        String message = bundle.get("message").toString();
+        values.put("CONTENT", message);
+        db.insert("PUSH_MESSAGES", null, values);
+
+        try {
+            String parsedMessage = new JSONObject(message).getString("body");
+            bundle.remove("message");
+            bundle.putString("message",parsedMessage);
+        } catch (JSONException e) {
+
+        }
+        /* Sqlite Database Saving */
         Log.v(LOG_TAG, "onMessageReceived: " + bundle);
 
         // We need to run this on the main thread, as the React code assumes that is true.
@@ -117,13 +142,11 @@ public class RNPushNotificationListenerService extends GcmListenerService {
     private boolean isApplicationInForeground() {
         ActivityManager activityManager = (ActivityManager) this.getSystemService(ACTIVITY_SERVICE);
         List<RunningAppProcessInfo> processInfos = activityManager.getRunningAppProcesses();
-        if (processInfos != null) {
-            for (RunningAppProcessInfo processInfo : processInfos) {
-                if (processInfo.processName.equals(getApplication().getPackageName())) {
-                    if (processInfo.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
-                        for (String d : processInfo.pkgList) {
-                            return true;
-                        }
+        for (RunningAppProcessInfo processInfo : processInfos) {
+            if (processInfo.processName.equals(getApplication().getPackageName())) {
+                if (processInfo.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                    for (String d : processInfo.pkgList) {
+                        return true;
                     }
                 }
             }
