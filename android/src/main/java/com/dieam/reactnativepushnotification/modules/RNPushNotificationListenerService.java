@@ -113,10 +113,12 @@ public class RNPushNotificationListenerService extends GcmListenerService {
     private void handleRemotePushNotification(ReactApplicationContext context, Bundle bundle) {
 
         // If notification ID is not provided by the user for push notification, generate one at random
-        if (bundle.getString("id") == null) {
-            Random randomNumberGenerator = new Random(System.currentTimeMillis());
-            bundle.putString("id", String.valueOf(randomNumberGenerator.nextInt()));
-        }
+        // if (bundle.getString("id") == null) {
+        //     Random randomNumberGenerator = new Random(System.currentTimeMillis());
+        //     bundle.putString("id", String.valueOf(randomNumberGenerator.nextInt()));
+        // }
+        // Bildirim id'si gelse de gelmezse de hepsini aynı id üzerinde işlem yapılıyor 
+        bundle.putString("id", "1");
 
         Boolean isForeground = isApplicationInForeground();
 
